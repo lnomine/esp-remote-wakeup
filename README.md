@@ -27,11 +27,11 @@ release of the devkit (ESP32-S3-DevKitC-1) has it on GPIO38.
 - Run `01-build.sh`
 - Create the file `defport-flash` and put `/dev/ttyACM0` into it (or the port
   where your ESP can be programmed)
-- Put your ESP into bootloader mode by pressing and holding the GPIO0 button
-  while pressing the reset button
-- Run `02-flash.sh`
 - Create the file `defport-monitor` and put `/dev/ttyUSB0` into it (or the port
   where your ESP serial console is)
+- Put your ESP into bootloader mode by pressing and holding the GPIO0 (BOOT) button
+  while pressing the reset button
+- Run `02-flash.sh`
 - Run `03-monitor.sh`
 - Press the reset button on your board to exit bootloader mode
 
