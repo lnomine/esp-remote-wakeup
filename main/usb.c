@@ -7,11 +7,19 @@
 #include <esp_log.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/event_groups.h>
+#include <freertos/queue.h>
+#include <string.h>
 
 static const char *TAG = "usb";
 
 #define USB_EVENT_KEYPRESS	(1 << 0)
 static EventGroupHandle_t usb_event_group = NULL;
+
+typedef struct {
+	uint8_t modifier;
+	uint8_t keys[6];
+} kbd_report_t;
+static QueueHandle_t usb_kbd_queue = NULL;
 
 #define TUSB_DESC_TOTAL_LEN      (TUD_CONFIG_DESC_LEN + CFG_TUD_HID * TUD_HID_DESC_LEN)
 
@@ -61,6 +69,30 @@ uint16_t tud_hid_get_report_cb(uint8_t instance, uint8_t report_id, hid_report_t
 // Invoked when received SET_REPORT control request or
 // received data on OUT endpoint ( Report ID = 0, Type = 0 )
 void tud_hid_set_report_cb(uint8_t instance, uint8_t report_id, hid_report_type_t report_type, uint8_t const *buffer, uint16_t bufsize) {
+}
+
+void usb_send_keyboard_report(uint8_t modifier, const uint8_t keys[6]) {
+	if (!usb_kbd_queue)
+		return;
+	kbd_report_t rep = { .modifier = modifier };
+	memcpy(rep.keys, keys, 6);
+	xQueueSend(usb_kbd_queue, &rep, 0);
+}
+
+static void usb_kbd_task(void *pvParameters) {
+	kbd_report_t rep;
+	while (1) {
+		if (xQueueReceive(usb_kbd_queue, &rep, portMAX_DELAY) != pdTRUE)
+			continue;
+		if (!tud_mounted())
+			continue;
+		if (tud_suspended())
+			tud_remote_wakeup();
+		for (int i = 0; i < 25 && !tud_hid_ready(); i++)
+			vTaskDelay(pdMS_TO_TICKS(2));
+		if (tud_hid_ready())
+			tud_hid_keyboard_report(HID_ITF_PROTOCOL_KEYBOARD, rep.modifier, rep.keys);
+	}
 }
 
 void usb_request_keypress_send(bool from_isr) {
@@ -126,5 +158,10 @@ void usb_init(void) {
 	ESP_ERROR_CHECK(tinyusb_driver_install(&tusb_cfg));
 	if (xTaskCreate(usb_task, "usb_task", 4096, NULL, 5, NULL) != pdPASS)
 		ESP_LOGE(TAG, "error creating usb task");
+
+	usb_kbd_queue = xQueueCreate(32, sizeof(kbd_report_t));
+	if (xTaskCreate(usb_kbd_task, "usb_kbd_task", 4096, NULL, 5, NULL) != pdPASS)
+		ESP_LOGE(TAG, "error creating usb kbd task");
+
 	ESP_LOGI(TAG, "usb init done");
 }
