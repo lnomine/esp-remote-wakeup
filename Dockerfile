@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim AS builder
+FROM debian:trixie-slim AS builder
 
 ARG DEPS="git python-is-python3 python3-venv libusb-1.0-0 cmake make"
 
@@ -17,7 +17,7 @@ RUN chmod +x 00-init.sh 00-set-target.sh && \
     tar -czf /work.tar.gz -C / work
 
 
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 
 ARG DEPS="git python-is-python3 python3-venv libusb-1.0-0 cmake make"
 
