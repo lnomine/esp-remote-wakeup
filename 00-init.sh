@@ -7,11 +7,12 @@ scriptdir=`pwd`
 
 . .common.inc.sh
 
-git submodule update --init --recursive
-
-cd esp-idf
-git submodule update --init --recursive
-cd ..
+# Pin ESP-IDF to a known version explicitly, so a from-scratch build is
+# deterministic regardless of the recorded submodule gitlink.
+git submodule update --init esp-idf
+git -C esp-idf fetch --tags origin
+git -C esp-idf checkout v5.5.4
+git -C esp-idf submodule update --init --recursive
 
 rm -rf esp-idf-tools
 mkdir -p esp-idf-tools
@@ -20,7 +21,7 @@ rm -rf esp-idf-tools/dist
 
 esp-idf/tools/idf_tools.py install-python-env
 
-ENV=$scriptdir/esp-idf-tools/python_env/idf5.1_py3.11_env/bin/python
-$ENV -m pip install "setuptools<81" wheel
+ENV=$(echo "$scriptdir"/esp-idf-tools/python_env/idf*_py3*_env/bin/python)
+$ENV -m pip install setuptools wheel
 
 echo "init done"
