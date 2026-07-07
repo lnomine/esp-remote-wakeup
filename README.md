@@ -5,6 +5,7 @@ when a HTTP request is received.
 
 ## Usage
 
+- Run `00-set-target.sh esp32s3`
 - Edit the following settings in `sdkconfig`:
 
   - CONFIG_ESP_WAKEUP_KEYPRESS_WIFI_SSID
