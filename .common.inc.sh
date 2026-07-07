@@ -1,13 +1,5 @@
-export IDF_TOOLS_PATH=`pwd`/esp-idf-tools
-
-get_idf() {
-	export IDF_PATH=$PWD/esp-idf
-	. ${IDF_PATH}/export.sh
-	idf="$ESP_PYTHON $IDF_PATH/tools/idf.py"
-	esptool="$ESP_PYTHON $IDF_PATH/components/esptool_py/esptool/esptool.py"
-	espsecure="$ESP_PYTHON $IDF_PATH/components/esptool_py/esptool/espsecure.py"
-	espefuse="$ESP_PYTHON $IDF_PATH/components/esptool_py/esptool/espefuse.py"
-}
+IDF_IMAGE="${IDF_IMAGE:-espressif/idf:release-v5.5}"
+IDF_TARGET="${IDF_TARGET:-esp32s3}"
 
 print_common_usage() {
 	echo "usage: $0 -p [port]"
@@ -42,12 +34,36 @@ parse_args() {
 	fi
 }
 
+idf_docker() {
+	docker run --rm -it \
+		-v "$scriptdir":/project \
+		-w /project \
+		-u "$(id -u)" \
+		-e HOME=/tmp \
+		-e IDF_GIT_SAFE_DIR='*' \
+		"$IDF_IMAGE" idf.py "$@"
+}
+
+idf_docker_with_device() {
+	local device=$1
+	shift
+	docker run --rm -it \
+		-v "$scriptdir":/project \
+		-w /project \
+		-u "$(id -u)" \
+		-e HOME=/tmp \
+		-e IDF_GIT_SAFE_DIR='*' \
+		--device="$device" \
+		--group-add dialout \
+		"$IDF_IMAGE" idf.py "$@"
+}
+
 reset_build_ts() {
 	rm -f build/esp-idf/app_update/CMakeFiles/__idf_app_update.dir/esp_app_desc.c.obj
 }
 
 do_clean() {
-	$idf clean
-	$idf fullclean
-	rm -rf $scriptdir/build
+	idf_docker clean
+	idf_docker fullclean
+	rm -rf "$scriptdir/build"
 }

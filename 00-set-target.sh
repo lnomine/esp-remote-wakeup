@@ -7,6 +7,4 @@ scriptdir=`pwd`
 
 . .common.inc.sh
 
-get_idf
-
-$idf set-target $*
+idf_docker set-target ${1:-$IDF_TARGET}

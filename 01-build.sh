@@ -8,8 +8,6 @@ scriptdir=`pwd`
 . .common.inc.sh
 
 reset_build_ts
-get_idf
-
-$idf build
+idf_docker build
 
 echo "build finished successfully"

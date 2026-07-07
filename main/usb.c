@@ -2,6 +2,7 @@
 #include "led.h"
 
 #include <tinyusb.h>
+#include <tinyusb_default_config.h>
 #include <class/hid/hid_device.h>
 #include <esp_log.h>
 #include <freertos/FreeRTOS.h>
@@ -83,7 +84,7 @@ static void usb_task(void *pvParameters) {
 				ESP_LOGI(TAG, "sending wakeup signal");
 				led_handle_keypress_on();
 
-				tud_remote_wakeup();
+				tinyusb_remote_wakeup();
 
 				// uint8_t keycode[6] = { HID_KEY_A };
 				// tud_hid_keyboard_report(HID_ITF_PROTOCOL_KEYBOARD, 0, keycode);
@@ -103,11 +104,23 @@ void usb_init(void) {
 	ESP_LOGI(TAG, "usb init");
 	usb_event_group = xEventGroupCreate();
 	const tinyusb_config_t tusb_cfg = {
-		.device_descriptor = NULL,
-		.string_descriptor = hid_string_descriptor,
-		.string_descriptor_count = sizeof(hid_string_descriptor) / sizeof(hid_string_descriptor[0]),
-		.external_phy = false,
-		.configuration_descriptor = hid_configuration_descriptor,
+		.port = TINYUSB_PORT_FULL_SPEED_0,
+		.phy = {
+			.skip_setup = false,
+			.self_powered = false,
+			.vbus_monitor_io = -1,
+		},
+		.task = TINYUSB_TASK_DEFAULT(),
+		.descriptor = {
+			.device = NULL,
+			.qualifier = NULL,
+			.string = hid_string_descriptor,
+			.string_count = sizeof(hid_string_descriptor) / sizeof(hid_string_descriptor[0]),
+			.full_speed_config = hid_configuration_descriptor,
+			.high_speed_config = NULL,
+		},
+		.event_cb = NULL,
+		.event_arg = NULL,
 	};
 
 	ESP_ERROR_CHECK(tinyusb_driver_install(&tusb_cfg));

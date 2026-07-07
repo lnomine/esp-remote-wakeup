@@ -6,6 +6,4 @@ cd $scriptdir
 scriptdir=`pwd`
 
 . .common.inc.sh
-
-get_idf
 do_clean

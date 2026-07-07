@@ -1,7 +1,5 @@
 /build
 /sdkconfig
 /sdkconfig.old
-/.vscode/*.log
 /defport-*
-/esp-idf-tools
 /managed_components
