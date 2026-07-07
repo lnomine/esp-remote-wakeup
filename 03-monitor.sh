@@ -5,9 +5,7 @@ cd $scriptdir
 scriptdir=`pwd`
 
 . .common.inc.sh
-
 parse_args $@
-get_idf
 
 while [ 1 ]; do
 	if [ ! -c $port_monitor ]; then
@@ -18,11 +16,10 @@ while [ 1 ]; do
 		done
 	fi
 
-	$idf --port $port_monitor monitor --no-reset
+	idf_docker_with_device "$port_monitor" --port "$port_monitor" monitor --no-reset
 	if [ $? -eq 0 ]; then
 		break
 	fi
-	rm -f /var/lock/LCK..`basename ${port_monitor}`
 
 	# Fixing terminal line endings messed up by minicom.
 	stty sane
